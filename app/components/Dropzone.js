@@ -13,7 +13,7 @@ export default function Dropzone() {
             // fetch to converter api
             const formData = new FormData();
             formData.append("file", acceptedFiles[0]);
-            fetch("/api/convert", {
+            fetch("https://bookish-couscous-6w6957p5pw6347w7-3000.app.github.dev/api/convert", {
                 method: "POST",
                 body: formData
             })

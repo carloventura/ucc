@@ -3,13 +3,25 @@ import { PDFDocument } from 'pdf-lib';
 import { extract } from 'unrar-promise';
 import fs from 'fs';
 import path from 'path';
+import cors, {runMiddleware} from '../../middleware';
 
 export async function POST(request) {
-  const { cbr } = await request.json();
-  const cbrPath = path.resolve('/path/to/cbr/files', cbr);
-  const outputDir = path.resolve('/path/to/output/dir');
-
   try {
+    // Run the middleware
+    await runMiddleware(request, NextResponse, cors);
+
+    const { cbr } = await request.json();
+    const cbrPath = path.resolve('/path/to/cbr/files', cbr);
+    const outputDir = path.resolve('/path/to/output/dir');
+
+    console.log(`CBR Path: ${cbrPath}`);
+    console.log(`Output Directory: ${outputDir}`);
+
+    // Check if the CBR file exists
+    if (!fs.existsSync(cbrPath)) {
+      throw new Error(`CBR file not found: ${cbrPath}`);
+    }
+
     // Extract CBR file
     await extract(cbrPath, outputDir);
 
@@ -38,9 +50,11 @@ export async function POST(request) {
     const pdfPath = path.resolve(outputDir, 'output.pdf');
     fs.writeFileSync(pdfPath, pdfBytes);
 
-    return NextResponse.json({ status: 'ok', pdfPath });
+    // Return the relative path to the PDF file
+    const relativePdfPath = `/path/to/output/dir/output.pdf`;
+    return NextResponse.json({ status: 'ok', pdfPath: relativePdfPath });
   } catch (error) {
-    console.error(`Error: ${error}`);
+    console.error(`Error: ${error.message}`);
     return NextResponse.json({ status: 'error', message: error.message }, { status: 500 });
   }
 }
